@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: omegle_redis
+    ports:
+      - "6379:6379"
+    restart: always
+    command: redis-server --save "" --appendonly no # Maximum in-memory speed for matchmaking queues
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: omegle_backend
+    restart: always
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DEBUG=False
+      - SECRET_KEY=production-super-secret-key-omegle-scaling-999
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: omegle_frontend
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - backend
+
+networks:
+  default:
+    name: omegle_network

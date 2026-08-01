@@ -1,0 +1,32 @@
+services:
+  # 1. Django ASGI Backend Web Service
+  - type: web
+    name: omegle-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: omegle-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: omegle-redis
+          property: port
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+
+  # 2. React Frontend Web Service
+  - type: web
+    name: omegle-frontend
+    env: docker
+    dockerfilePath: ./frontend/Dockerfile
+
+  # 3. Free Managed Redis Instance
+  - type: redis
+    name: omegle-redis
+    ipAllowList: [] # Internal network access only
